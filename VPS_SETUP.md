@@ -26,25 +26,38 @@ docker --version
 docker-compose --version
 ```
 
-### 3. Setup SSH Key for GitHub
+### 3. Setup Deploy Key (Secure!)
+
+**📖 WICHTIG: Folge der detaillierten Anleitung in `VPS_DEPLOY_KEY_SETUP.md`**
+
+Kurzfassung:
 
 ```bash
-# Add your SSH key to VPS (copy your private key)
-mkdir -p ~/.ssh
-nano ~/.ssh/id_rsa
-# Paste your private key, then Ctrl+X, Y, Enter
+# Auf VPS: Key generieren
+ssh-keygen -t ed25519 -C "isarwasser-vps-deploy" -f ~/.ssh/isarwasser_deploy
+cat ~/.ssh/isarwasser_deploy.pub
 
-chmod 600 ~/.ssh/id_rsa
+# Bei GitHub: https://github.com/chrismod/isarwasser/settings/keys
+# → "Add deploy key" → Public Key einfügen → Read-only!
 
-# Test GitHub connection
-ssh -T git@github.com
+# SSH Config
+cat > ~/.ssh/config <<'EOF'
+Host github.com-isarwasser
+    HostName github.com
+    User git
+    IdentityFile ~/.ssh/isarwasser_deploy
+    IdentitiesOnly yes
+EOF
+
+# Testen
+ssh -T git@github.com-isarwasser
 ```
 
 ### 4. Clone Repository
 
 ```bash
 cd /opt
-git clone git@github.com:chrismod/isarwasser.git
+git clone git@github.com-isarwasser:chrismod/isarwasser.git
 cd isarwasser
 ```
 
