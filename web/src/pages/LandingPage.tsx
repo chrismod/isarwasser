@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { getLatestDaily, getNowVsNormalDayOfYear } from '../lib/isarQueries'
+import { getLatestDaily } from '../lib/isarQueries'
 import { getCurrentLiveData } from '../lib/liveData'
 import type { LiveMeasurement } from '../lib/liveData'
 import { useI18n } from '../lib/i18n'
