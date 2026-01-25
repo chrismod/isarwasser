@@ -12,6 +12,8 @@ services:
     volumes:
       # Mount live data so web can access it
       - ./data/current:/usr/share/nginx/html/data/current:ro
+      # Mount parquet data
+      - ./web/public/data/parquet:/usr/share/nginx/html/data/parquet:ro
     networks:
       - isarwasser-net
     depends_on:
