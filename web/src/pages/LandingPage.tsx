@@ -75,7 +75,6 @@ export function LandingPage() {
   const [temp, setTemp] = useState<any>({ mean: 3, date: new Date().toISOString() })
   const [liveLevel, setLiveLevel] = useState<LiveMeasurement | null>(null)
   const [err, setErr] = useState<string | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
     let cancelled = false
@@ -90,11 +89,9 @@ export function LandingPage() {
         setLevel(l)
         setTemp(t)
         setLiveLevel(live.waterLevel)
-        setIsLoading(false)
       } catch (e: any) {
         if (cancelled) return
         setErr(String(e?.message ?? e))
-        setIsLoading(false)
       }
     })()
     return () => {
