@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+    container_name: isarwasser-web
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    volumes:
+      # Mount live data so web can access it
+      - ./data/current:/usr/share/nginx/html/data/current:ro
+    networks:
+      - isarwasser-net
+    depends_on:
+      - pipeline
+
+  pipeline:
+    build:
+      context: .
+      dockerfile: Dockerfile.pipeline
+    container_name: isarwasser-pipeline
+    restart: unless-stopped
+    volumes:
+      # Persist data
+      - ./data:/app/data
+      # Persist logs
+      - ./logs:/var/log
+    networks:
+      - isarwasser-net
+    environment:
+      - TZ=Europe/Berlin
+
+networks:
+  isarwasser-net:
+    driver: bridge
