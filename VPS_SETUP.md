@@ -56,7 +56,14 @@ ssh -T git@github.com-isarwasser
 ### 4. Clone Repository
 
 ```bash
-cd /opt
+# Option A: /srv (Empfohlen - für Services)
+cd /srv
+git clone git@github.com-isarwasser:chrismod/isarwasser.git
+cd isarwasser
+
+# Option B: Mit dediziertem User (Best Practice)
+useradd -m -s /bin/bash deploy
+su - deploy
 git clone git@github.com-isarwasser:chrismod/isarwasser.git
 cd isarwasser
 ```
@@ -66,7 +73,10 @@ cd isarwasser
 ### Initial Deployment
 
 ```bash
-cd /opt/isarwasser
+# Wechsel ins Projekt-Verzeichnis
+cd /srv/isarwasser
+# ODER: cd /home/deploy/isarwasser
+
 docker-compose up -d --build
 ```
 
@@ -89,7 +99,7 @@ docker-compose exec pipeline tail -f /var/log/cron.log
 Simply run:
 
 ```bash
-cd /opt/isarwasser
+cd /srv/isarwasser  # oder dein Installations-Pfad
 ./deploy.sh
 ```
 
@@ -200,6 +210,13 @@ docker system prune -a
 ## 📝 Notes
 
 - Scraper runs every 3 hours via cron
-- Data persists in `/opt/isarwasser/data`
-- Logs persist in `/opt/isarwasser/logs`
+- Data persists in `<install-dir>/data`
+- Logs persist in `<install-dir>/logs`
 - To update: just run `./deploy.sh`
+
+## 📂 Recommended Installation Paths
+
+- **Best:** `/srv/isarwasser` (FHS standard for services)
+- **Also good:** `/home/deploy/isarwasser` (with dedicated user)
+- **Works:** `/opt/isarwasser` (common but not ideal)
+- **Not recommended:** `/var/www` (for static content only)
