@@ -73,9 +73,6 @@ export function LandingPage() {
   const [level, setLevel] = useState<any>(null)
   const [temp, setTemp] = useState<any>(null)
   const [liveLevel, setLiveLevel] = useState<LiveMeasurement | null>(null)
-  const [liveTemp, setLiveTemp] = useState<LiveMeasurement | null>(null)
-  const [levelP, setLevelP] = useState<any>(null)
-  const [tempP, setTempP] = useState<any>(null)
   const [err, setErr] = useState<string | null>(null)
 
   useEffect(() => {
