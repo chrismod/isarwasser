@@ -11,7 +11,7 @@ fi
 
 # Install Python dependencies if not already installed
 echo "📦 Checking Python dependencies..."
-python3 -m pip install -q -r pipeline/requirements.txt
+python3 -m pip install -q --break-system-packages -r pipeline/requirements.txt
 
 # Create data directories
 echo "📁 Creating data directories..."
