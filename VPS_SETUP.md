@@ -68,6 +68,24 @@ git clone git@github.com-isarwasser:chrismod/isarwasser.git
 cd isarwasser
 ```
 
+### 5. Setup Data Pipeline
+
+**WICHTIG:** Vor dem ersten Docker-Start müssen die Parquet-Dateien generiert werden:
+
+```bash
+# Install Python dependencies
+apt install -y python3-pip
+
+# Run data setup
+./setup-data.sh
+```
+
+Das macht:
+- Installiert Python dependencies
+- Konvertiert CSV → Parquet
+- Fetched erste Live-Daten
+- Kopiert alles nach `web/public/`
+
 ## 🐳 Deploy Application
 
 ### Initial Deployment
@@ -77,6 +95,10 @@ cd isarwasser
 cd /srv/isarwasser
 # ODER: cd /home/deploy/isarwasser
 
+# WICHTIG: Erst Daten generieren!
+./setup-data.sh
+
+# Dann Docker starten
 docker-compose up -d --build
 ```
 
