@@ -79,20 +79,15 @@ export function LandingPage() {
     let cancelled = false
     ;(async () => {
       try {
-        const [l, t, lp, tp, live] = await Promise.all([
+        const [l, t, live] = await Promise.all([
           getLatestDaily('water_level_cm'),
           getLatestDaily('water_temperature_c'),
-          getNowVsNormalDayOfYear('water_level_cm'),
-          getNowVsNormalDayOfYear('water_temperature_c'),
           getCurrentLiveData(),
         ])
         if (cancelled) return
         setLevel(l)
         setTemp(t)
-        setLevelP(lp)
-        setTempP(tp)
         setLiveLevel(live.waterLevel)
-        setLiveTemp(live.waterTemp)
       } catch (e: any) {
         if (cancelled) return
         setErr(String(e?.message ?? e))
