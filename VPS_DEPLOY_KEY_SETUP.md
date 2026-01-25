@@ -55,7 +55,7 @@ ssh -T git@github.com-isarwasser
 
 ```bash
 # Mit speziellem Host-Alias klonen
-cd /opt
+cd /srv
 git clone git@github.com-isarwasser:chrismod/isarwasser.git
 cd isarwasser
 
