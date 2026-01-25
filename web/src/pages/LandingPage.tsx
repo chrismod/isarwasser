@@ -70,10 +70,12 @@ function formatDate(date: any): string {
 
 export function LandingPage() {
   const { t } = useI18n()
-  const [level, setLevel] = useState<any>(null)
-  const [temp, setTemp] = useState<any>(null)
+  // Initialize with placeholder values for instant display
+  const [level, setLevel] = useState<any>({ mean: 87, date: new Date().toISOString() })
+  const [temp, setTemp] = useState<any>({ mean: 3, date: new Date().toISOString() })
   const [liveLevel, setLiveLevel] = useState<LiveMeasurement | null>(null)
   const [err, setErr] = useState<string | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
     let cancelled = false
@@ -88,9 +90,11 @@ export function LandingPage() {
         setLevel(l)
         setTemp(t)
         setLiveLevel(live.waterLevel)
+        setIsLoading(false)
       } catch (e: any) {
         if (cancelled) return
         setErr(String(e?.message ?? e))
+        setIsLoading(false)
       }
     })()
     return () => {
@@ -123,7 +127,7 @@ export function LandingPage() {
                   <div className="stat-content">
                     <div className="stat-label">{t.landingWaterLevel}</div>
                     <div className="stat-value">
-                      {liveLevel ? `${liveLevel.value_cm.toFixed(1)}` : level ? `${level.mean.toFixed(1)}` : '—'}
+                      {liveLevel ? `${liveLevel.value_cm.toFixed(1)}` : `${level.mean.toFixed(1)}`}
                       <span className="stat-unit">{t.unitCm}</span>
                     </div>
                     {(liveLevel?.timestamp || level?.date) && (
@@ -143,7 +147,7 @@ export function LandingPage() {
                   <div className="stat-content">
                     <div className="stat-label">{t.landingWaterTemp}</div>
                     <div className="stat-value">
-                      {temp ? `${temp.mean.toFixed(1)}` : '—'}
+                      {`${temp.mean.toFixed(1)}`}
                       <span className="stat-unit">{t.unitCelsius}</span>
                     </div>
                     {temp?.date && (
