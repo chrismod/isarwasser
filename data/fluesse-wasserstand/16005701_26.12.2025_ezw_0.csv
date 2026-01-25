@@ -1,0 +1,58 @@
+﻿Quelle:;"Bayerisches Landesamt für Umwelt, www.gkd.bayern.de"
+Datenbankabfrage:;"26.12.2025 11:50"
+Zeitbezug:;MEZ
+Messstellen-Name:;München
+Messstellen-Nr.:;16005701
+Gewässer:;Isar
+Ostwert:;693161;Nordwert:;5335716;"ETRS89 / UTM Zone 32N"
+Pegelnullpunktshöhe:;"500,33 m NHN (DHHN2016)"
+
+Datum;"Wasserstand [cm]";Prüfstatus
+"2025-12-26 00:00";94,00;Rohdaten
+"2025-12-26 00:15";94,00;Rohdaten
+"2025-12-26 00:30";94,00;Rohdaten
+"2025-12-26 00:45";95,00;Rohdaten
+"2025-12-26 01:00";94,00;Rohdaten
+"2025-12-26 01:15";94,00;Rohdaten
+"2025-12-26 01:30";93,00;Rohdaten
+"2025-12-26 01:45";93,00;Rohdaten
+"2025-12-26 02:00";94,00;Rohdaten
+"2025-12-26 02:15";94,00;Rohdaten
+"2025-12-26 02:30";93,00;Rohdaten
+"2025-12-26 02:45";93,00;Rohdaten
+"2025-12-26 03:00";93,00;Rohdaten
+"2025-12-26 03:15";93,00;Rohdaten
+"2025-12-26 03:30";93,00;Rohdaten
+"2025-12-26 03:45";93,00;Rohdaten
+"2025-12-26 04:00";94,00;Rohdaten
+"2025-12-26 04:15";93,00;Rohdaten
+"2025-12-26 04:30";93,00;Rohdaten
+"2025-12-26 04:45";94,00;Rohdaten
+"2025-12-26 05:00";94,00;Rohdaten
+"2025-12-26 05:15";93,00;Rohdaten
+"2025-12-26 05:30";93,00;Rohdaten
+"2025-12-26 05:45";93,00;Rohdaten
+"2025-12-26 06:00";93,00;Rohdaten
+"2025-12-26 06:15";93,00;Rohdaten
+"2025-12-26 06:30";93,00;Rohdaten
+"2025-12-26 06:45";93,00;Rohdaten
+"2025-12-26 07:00";93,00;Rohdaten
+"2025-12-26 07:15";93,00;Rohdaten
+"2025-12-26 07:30";93,00;Rohdaten
+"2025-12-26 07:45";93,00;Rohdaten
+"2025-12-26 08:00";94,00;Rohdaten
+"2025-12-26 08:15";94,00;Rohdaten
+"2025-12-26 08:30";94,00;Rohdaten
+"2025-12-26 08:45";94,00;Rohdaten
+"2025-12-26 09:00";94,00;Rohdaten
+"2025-12-26 09:15";94,00;Rohdaten
+"2025-12-26 09:30";93,00;Rohdaten
+"2025-12-26 09:45";92,00;Rohdaten
+"2025-12-26 10:00";93,00;Rohdaten
+"2025-12-26 10:15";93,00;Rohdaten
+"2025-12-26 10:30";93,00;Rohdaten
+"2025-12-26 10:45";92,00;Rohdaten
+"2025-12-26 11:00";92,00;Rohdaten
+"2025-12-26 11:15";92,00;Rohdaten
+"2025-12-26 11:30";92,00;Rohdaten
+"2025-12-26 11:45";92,00;Rohdaten

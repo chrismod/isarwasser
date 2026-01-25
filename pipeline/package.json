@@ -1,0 +1,13 @@
+{
+  "name": "isarwasser-pipeline",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "ingest": "node ingest_lfu_csv_to_parquet.mjs"
+  },
+  "dependencies": {
+    "parquetjs-lite": "^0.8.7"
+  }
+}
+
+
