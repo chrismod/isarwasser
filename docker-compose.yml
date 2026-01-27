@@ -16,6 +16,7 @@ services:
       - ./web/public/data/parquet:/usr/share/nginx/html/data/parquet:ro
     networks:
       - isarwasser-net
+      - proxy-network  # Connect to NPM network
     depends_on:
       - pipeline
 
@@ -38,3 +39,6 @@ services:
 networks:
   isarwasser-net:
     driver: bridge
+  proxy-network:
+    external: true
+    name: nginx-proxy-manager_proxy-network
