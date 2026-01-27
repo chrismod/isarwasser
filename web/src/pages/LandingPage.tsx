@@ -126,7 +126,7 @@ export function LandingPage() {
                   <div className="stat-content">
                     <div className="stat-label">{t.landingWaterLevel}</div>
                     <div className="stat-value">
-                      {liveLevel ? `${liveLevel.value_cm.toFixed(1)}` : `${level.mean.toFixed(1)}`}
+                      {liveLevel?.value_cm ? `${liveLevel.value_cm.toFixed(1)}` : `${level.mean.toFixed(1)}`}
                       <span className="stat-unit">{t.unitCm}</span>
                     </div>
                     {(liveLevel?.timestamp || level?.date) && (
@@ -146,7 +146,7 @@ export function LandingPage() {
                   <div className="stat-content">
                     <div className="stat-label">{t.landingWaterTemp}</div>
                     <div className="stat-value">
-                      {liveTemp ? `${liveTemp.value_celsius!.toFixed(1)}` : `${temp.mean.toFixed(1)}`}
+                      {liveTemp?.value_celsius ? `${liveTemp.value_celsius.toFixed(1)}` : `${temp.mean.toFixed(1)}`}
                       <span className="stat-unit">{t.unitCelsius}</span>
                     </div>
                     {(liveTemp?.timestamp || temp?.date) && (
