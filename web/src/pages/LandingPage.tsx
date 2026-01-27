@@ -74,6 +74,7 @@ export function LandingPage() {
   const [level, setLevel] = useState<any>({ mean: 87, date: new Date().toISOString() })
   const [temp, setTemp] = useState<any>({ mean: 3, date: new Date().toISOString() })
   const [liveLevel, setLiveLevel] = useState<LiveMeasurement | null>(null)
+  const [liveTemp, setLiveTemp] = useState<LiveMeasurement | null>(null)
   const [err, setErr] = useState<string | null>(null)
 
   useEffect(() => {
@@ -89,6 +90,7 @@ export function LandingPage() {
         setLevel(l)
         setTemp(t)
         setLiveLevel(live.waterLevel)
+        setLiveTemp(live.waterTemp)
       } catch (e: any) {
         if (cancelled) return
         setErr(String(e?.message ?? e))
@@ -144,12 +146,12 @@ export function LandingPage() {
                   <div className="stat-content">
                     <div className="stat-label">{t.landingWaterTemp}</div>
                     <div className="stat-value">
-                      {`${temp.mean.toFixed(1)}`}
+                      {liveTemp ? `${liveTemp.value_celsius!.toFixed(1)}` : `${temp.mean.toFixed(1)}`}
                       <span className="stat-unit">{t.unitCelsius}</span>
                     </div>
-                    {temp?.date && (
+                    {(liveTemp?.timestamp || temp?.date) && (
                       <div className="stat-date">
-                        {formatDate(temp.date)}
+                        {liveTemp ? formatDate(liveTemp.timestamp) : formatDate(temp.date)}
                       </div>
                     )}
                   </div>
