@@ -17,14 +17,24 @@ CURRENT_DATA_DIR = PROJECT_ROOT / "data" / "current"
 PARQUET_DIR = PROJECT_ROOT / "data" / "parquet" / "raw"
 WEB_PARQUET_DIR = PROJECT_ROOT / "web" / "public" / "data" / "parquet" / "raw"
 
-def read_jsonl_files(days_back: int = 7):
-    """Read JSONL files from the last N days"""
+def read_jsonl_files(parameter: str, days_back: int = 7):
+    """Read JSONL files from the last N days for a specific parameter"""
     measurements = []
+    
+    # Determine filename pattern and value field based on parameter
+    if parameter == 'water_level_cm':
+        file_prefix = 'water_level'
+        value_field = 'value_cm'
+    elif parameter == 'water_temperature_c':
+        file_prefix = 'water_temperature'
+        value_field = 'value_celsius'
+    else:
+        raise ValueError(f"Unknown parameter: {parameter}")
     
     for i in range(days_back):
         date = datetime.now() - timedelta(days=i)
         date_str = date.strftime('%Y-%m-%d')
-        jsonl_file = CURRENT_DATA_DIR / f"water_level_{date_str}.jsonl"
+        jsonl_file = CURRENT_DATA_DIR / f"{file_prefix}_{date_str}.jsonl"
         
         if not jsonl_file.exists():
             continue
@@ -38,9 +48,9 @@ def read_jsonl_files(days_back: int = 7):
                         data = json.loads(line)
                         measurements.append({
                             'station_id': int(data['station_id']),
-                            'parameter': 'water_level_cm',
+                            'parameter': parameter,
                             'ts': pd.Timestamp(data['timestamp']),
-                            'value': float(data['value_cm']),
+                            'value': float(data[value_field]),
                             'status': 'Rohdaten',  # Live data status
                         })
                     except Exception as e:
@@ -70,21 +80,18 @@ def merge_with_existing_parquet(new_data: pd.DataFrame, parquet_file: Path):
         print(f"Creating new file {parquet_file.name}...")
         return new_data.sort_values('ts')
 
-def main():
-    print("=" * 80)
-    print("🔄 Migrating Live JSONL Data to Parquet")
-    print("=" * 80)
-    print()
+def migrate_parameter(parameter: str, days_back: int = 7):
+    """Migrate a single parameter (water_level_cm or water_temperature_c)"""
+    print(f"\n--- Migrating {parameter} ---")
     
     # Read JSONL files
-    measurements = read_jsonl_files(days_back=7)
+    measurements = read_jsonl_files(parameter, days_back=days_back)
     
     if not measurements:
-        print("❌ No measurements found in JSONL files")
-        return 1
+        print(f"⚠️  No measurements found for {parameter}")
+        return 0
     
     print(f"✅ Found {len(measurements)} measurements")
-    print()
     
     # Convert to DataFrame
     df = pd.DataFrame(measurements)
@@ -99,13 +106,16 @@ def main():
     ])
     
     # Parquet file path
-    parquet_file = PARQUET_DIR / "station_16005701_water_level_cm.parquet"
+    parquet_file = PARQUET_DIR / f"station_16005701_{parameter}.parquet"
+    
+    # Ensure directories exist
+    PARQUET_DIR.mkdir(parents=True, exist_ok=True)
+    WEB_PARQUET_DIR.mkdir(parents=True, exist_ok=True)
     
     # Merge with existing data
     final_df = merge_with_existing_parquet(df, parquet_file)
     
     # Write to Parquet
-    print()
     print(f"Writing to {parquet_file}...")
     table = pa.Table.from_pandas(final_df, schema=schema, preserve_index=False)
     pq.write_table(table, parquet_file, compression='zstd')
@@ -113,21 +123,32 @@ def main():
     # Sync to web public folder
     print(f"Syncing to web public folder...")
     web_file = WEB_PARQUET_DIR / parquet_file.name
-    web_file.parent.mkdir(parents=True, exist_ok=True)
     pq.write_table(table, web_file, compression='zstd')
+    
+    print(f"📊 {parameter}:")
+    print(f"   Total records: {len(final_df)}")
+    print(f"   Date range: {final_df['ts'].min()} to {final_df['ts'].max()}")
+    
+    return len(final_df)
+
+def main():
+    print("=" * 80)
+    print("🔄 Migrating Live JSONL Data to Parquet")
+    print("=" * 80)
+    
+    total_records = 0
+    
+    # Migrate water level
+    total_records += migrate_parameter('water_level_cm', days_back=7)
+    
+    # Migrate water temperature
+    total_records += migrate_parameter('water_temperature_c', days_back=7)
     
     print()
     print("=" * 80)
     print("✅ Migration Complete!")
     print("=" * 80)
-    print()
-    print(f"📊 Final dataset:")
-    print(f"   Total records: {len(final_df)}")
-    print(f"   Date range: {final_df['ts'].min()} to {final_df['ts'].max()}")
-    print()
-    print("💡 Next steps:")
-    print("   1. Run ingest_lfu_csv_to_parquet.py to regenerate daily aggregates")
-    print("   2. Refresh web app to see updated data")
+    print(f"   Total records processed: {total_records}")
     print()
     
     return 0

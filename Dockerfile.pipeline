@@ -20,10 +20,14 @@ COPY data/ ./data/
 # Make scripts executable
 RUN chmod +x pipeline/*.py
 
-# Setup cron job (every 3 hours)
-RUN echo "0 */3 * * * cd /app && /usr/local/bin/python3 /app/pipeline/fetch_and_store_isar.py >> /var/log/cron.log 2>&1" > /etc/cron.d/fetch-isar && \
-    chmod 0644 /etc/cron.d/fetch-isar && \
-    crontab /etc/cron.d/fetch-isar
+# Setup cron jobs
+RUN echo "# Fetch live data every 3 hours" > /etc/cron.d/isarwasser && \
+    echo "0 */3 * * * cd /app && /usr/local/bin/python3 /app/pipeline/fetch_and_store_isar.py >> /var/log/cron.log 2>&1" >> /etc/cron.d/isarwasser && \
+    echo "" >> /etc/cron.d/isarwasser && \
+    echo "# Migrate live data to Parquet every 3 hours (15 min after fetch)" >> /etc/cron.d/isarwasser && \
+    echo "15 */3 * * * cd /app && /usr/local/bin/python3 /app/pipeline/migrate_live_to_parquet.py >> /var/log/cron.log 2>&1" >> /etc/cron.d/isarwasser && \
+    chmod 0644 /etc/cron.d/isarwasser && \
+    crontab /etc/cron.d/isarwasser
 
 # Health check
 HEALTHCHECK --interval=5m --timeout=10s --start-period=10s --retries=3 \
