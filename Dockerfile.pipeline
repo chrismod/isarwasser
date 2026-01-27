@@ -23,12 +23,11 @@ RUN chmod +x pipeline/*.py
 # Setup cron job (every 3 hours)
 RUN echo "0 */3 * * * cd /app && /usr/local/bin/python3 /app/pipeline/fetch_and_store_isar.py >> /var/log/cron.log 2>&1" > /etc/cron.d/fetch-isar && \
     chmod 0644 /etc/cron.d/fetch-isar && \
-    crontab /etc/cron.d/fetch-isar && \
-    touch /var/log/cron.log
+    crontab /etc/cron.d/fetch-isar
 
 # Health check
 HEALTHCHECK --interval=5m --timeout=10s --start-period=10s --retries=3 \
   CMD test -f /app/data/current/water_level_$(date +\%Y-\%m-\%d).jsonl || exit 1
 
 # Start cron in foreground
-CMD cron && tail -f /var/log/cron.log
+CMD touch /var/log/cron.log && cron && tail -f /var/log/cron.log
