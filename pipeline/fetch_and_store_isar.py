@@ -140,11 +140,20 @@ def fetch_latest_water_temperature():
         date_time_str = cols[0].get_text(strip=True)
         value_str = cols[1].get_text(strip=True).replace(',', '.')
         
+        # Check for missing data
+        if value_str in ['--', '', 'n/a', 'N/A']:
+            log(f"WARNING: No temperature data available (value: '{value_str}')")
+            return None
+        
         # Parse date/time (format: "27.01.2026 19:30")
         timestamp = datetime.strptime(date_time_str, "%d.%m.%Y %H:%M")
         
         # Parse value (format: "4,1" in °C)
-        value = float(value_str)
+        try:
+            value = float(value_str)
+        except ValueError:
+            log(f"WARNING: Could not parse temperature value: '{value_str}'")
+            return None
         
         measurement = {
             'timestamp': timestamp.isoformat(),
