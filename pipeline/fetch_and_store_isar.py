@@ -123,36 +123,50 @@ def fetch_latest_water_temperature():
             log("ERROR: Could not find temperature data table")
             return None
         
-        # Get first data row (most recent)
+        # Get all data rows
         rows = table.find_all('tr')
         
         if len(rows) < 2:
             log("ERROR: No temperature data rows found")
             return None
         
-        first_data_row = rows[1]
-        cols = first_data_row.find_all('td')
-        
-        if len(cols) < 2:
-            log("ERROR: Invalid temperature table structure")
-            return None
-        
-        date_time_str = cols[0].get_text(strip=True)
-        value_str = cols[1].get_text(strip=True).replace(',', '.')
-        
-        # Check for missing data
-        if value_str in ['--', '', 'n/a', 'N/A']:
-            log(f"WARNING: No temperature data available (value: '{value_str}')")
-            return None
-        
-        # Parse date/time (format: "27.01.2026 19:30")
-        timestamp = datetime.strptime(date_time_str, "%d.%m.%Y %H:%M")
-        
-        # Parse value (format: "4,1" in °C)
-        try:
-            value = float(value_str)
-        except ValueError:
-            log(f"WARNING: Could not parse temperature value: '{value_str}'")
+        # Iterate through rows to find first valid measurement (skip header)
+        for row_idx, row in enumerate(rows[1:], start=1):
+            cols = row.find_all('td')
+            
+            if len(cols) < 2:
+                continue
+            
+            date_time_str = cols[0].get_text(strip=True)
+            value_str = cols[1].get_text(strip=True).replace(',', '.')
+            
+            # Skip missing data
+            if value_str in ['--', '', 'n/a', 'N/A']:
+                if row_idx == 1:
+                    log(f"INFO: Most recent measurement has no data ('{value_str}'), checking older measurements...")
+                continue
+            
+            # Parse date/time (format: "27.01.2026 19:30")
+            try:
+                timestamp = datetime.strptime(date_time_str, "%d.%m.%Y %H:%M")
+            except ValueError as e:
+                log(f"WARNING: Could not parse timestamp '{date_time_str}': {e}")
+                continue
+            
+            # Parse value (format: "4,1" in °C)
+            try:
+                value = float(value_str)
+            except ValueError:
+                log(f"WARNING: Could not parse temperature value: '{value_str}'")
+                continue
+            
+            # Found valid measurement!
+            if row_idx > 1:
+                log(f"INFO: Using measurement from row {row_idx} (most recent data had gaps)")
+            break
+        else:
+            # No valid measurement found in entire table
+            log("WARNING: No valid temperature measurements found in table")
             return None
         
         measurement = {
