@@ -44,18 +44,17 @@ for input_file in "$INPUT_DIR"/*.mp4; do
     echo "  📦 Input size: $input_size"
     
     # Optimize video:
-    # - Scale to max 1280px width (maintain aspect ratio)
+    # - Scale to max 1920px / 1080p (maintain aspect ratio)
     # - 30fps (smooth but efficient)
-    # - CRF 28 (good quality/size balance for background video)
+    # - CRF 22 (visually high quality, ~4x file size of CRF 28)
     # - H.264 codec (best browser compatibility)
     # - Faststart for web streaming
-    # - 2-pass for better quality/size ratio
-    
+
     ffmpeg -i "$input_file" \
-        -vf "scale='min(1280,iw)':'min(720,ih)':force_original_aspect_ratio=decrease,scale=trunc(iw/2)*2:trunc(ih/2)*2" \
+        -vf "scale='min(1920,iw)':'min(1080,ih)':force_original_aspect_ratio=decrease,scale=trunc(iw/2)*2:trunc(ih/2)*2" \
         -c:v libx264 \
         -preset slow \
-        -crf 28 \
+        -crf 22 \
         -r 30 \
         -movflags +faststart \
         -an \

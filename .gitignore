@@ -27,6 +27,24 @@ log.txt
 web/public/mp4_raw/*.mp4
 !web/public/mp4_raw/.gitkeep
 
+## Optimized videos (deployed manually to server, not via git)
+web/public/videos/*.mp4
+web/public/videos/flood-set.json
+!web/public/videos/.gitkeep
+
+## Raw photos (private, manually promoted from imgsort)
+web/public/jpg_raw/*.jpg
+web/public/jpg_raw/*.jpeg
+!web/public/jpg_raw/.gitkeep
+
+## Photo curator local state
+imgsort/curator.db
+imgsort/curator.db-journal
+imgsort/curator.db-wal
+imgsort/curator.db-shm
+imgsort/thumbs/
+imgsort/preview/
+
 ## OS
 .DS_Store
 Thumbs.db

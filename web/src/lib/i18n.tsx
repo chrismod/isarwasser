@@ -7,7 +7,7 @@ const translations = {
     // App Layout
     appName: 'Isarwasser',
     appSubtitle: 'München',
-    navStory: 'Geschichte',
+    navStory: 'Dahoam',
     navExplore: 'Erkunden',
     navRecords: 'Rekorde',
     footerSource: 'Datenquelle: Bayerisches Landesamt für Umwelt (gkd.bayern.de), Pegel 16005701 München/Isar. v1 ist ein lokaler Entwicklungs-Prototyp.',
@@ -86,7 +86,7 @@ const translations = {
     // App Layout
     appName: 'Isarwasser',
     appSubtitle: 'München',
-    navStory: 'Story',
+    navStory: 'Home',
     navExplore: 'Explore',
     navRecords: 'Min./Max.',
     footerSource: 'Data source: Bayerisches Landesamt für Umwelt (gkd.bayern.de), Station 16005701 München/Isar. v1 is a local dev prototype.',
