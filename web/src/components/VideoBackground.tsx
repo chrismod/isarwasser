@@ -1,25 +1,6 @@
 import { useEffect, useState } from 'react'
 import { getCurrentLiveData } from '../lib/liveData'
-
-// List of available background videos.
-// Update this list after running optimize_videos.sh.
-const VIDEOS = [
-  '/videos/20260103_155322.mp4',
-  '/videos/20260115_142710.mp4',
-  '/videos/20260115_142722.mp4',
-  '/videos/20260115_144132.mp4',
-  '/videos/20260115_144757.mp4',
-  '/videos/20260115_145149.mp4',
-  '/videos/20260115_145205.mp4',
-  '/videos/20260121_142353.mp4',
-  '/videos/20260121_142731.mp4',
-  '/videos/20260121_142804.mp4',
-  '/videos/20260123_153323.mp4',
-  '/videos/20260123_153336.mp4',
-  '/videos/20260123_153709.mp4',
-  '/videos/20260123_154203.mp4',
-  '/videos/20260123_154226.mp4',
-]
+import { VIDEOS } from '../generated/videoList'
 
 // Water level (cm) at or above which flood-tagged clips may appear in
 // the background-video pool. Below this, they are unconditionally hidden.

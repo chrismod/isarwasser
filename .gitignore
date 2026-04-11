@@ -6,6 +6,7 @@
 ## Node
 web/node_modules/
 web/dist/
+web/src/generated/
 pipeline/node_modules/
 
 ## Generated data
