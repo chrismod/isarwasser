@@ -329,6 +329,66 @@ a {
   pointer-events: none;
 }
 
+/* Video info bubble — lives outside .video-background (z-index:-1),
+   fixed to viewport so it stays visible and clickable. */
+.video-info-bubble {
+  position: fixed;
+  bottom: 16px;
+  right: 16px;
+  z-index: 10;
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.video-info-toggle {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: rgba(7, 12, 18, 0.55);
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 14px;
+  font-style: italic;
+  font-family: Georgia, 'Times New Roman', serif;
+  cursor: pointer;
+  backdrop-filter: blur(6px);
+  transition: background 0.15s, color 0.15s;
+  flex-shrink: 0;
+}
+
+.video-info-toggle:hover,
+.video-info-toggle.open {
+  background: rgba(7, 12, 18, 0.75);
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.video-info-pill {
+  background: rgba(7, 12, 18, 0.55);
+  backdrop-filter: blur(6px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.82);
+  white-space: nowrap;
+  animation: info-fade-in 0.2s ease;
+}
+
+@keyframes info-fade-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 640px) {
+  .video-info-pill {
+    white-space: normal;
+    max-width: 240px;
+    font-size: 11px;
+  }
+}
+
 /* Make content pop over video */
 .landing-page .container {
   position: relative;
@@ -397,10 +457,16 @@ a {
 }
 
 .stat-card:hover {
-  background: rgba(7, 12, 18, 0.85);
+  background: rgba(7, 12, 18, 0.88);
   border-color: rgba(77, 214, 255, 0.4);
   transform: translateY(-2px);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+@media (max-width: 700px) {
+  .stat-card:hover {
+    transform: none;
+  }
 }
 
 .stat-icon {
@@ -449,6 +515,91 @@ a {
 .stat-date {
   font-size: 12px;
   color: var(--fg2);
+}
+
+/* Expandable stat card with hover tooltip */
+.stat-card-expandable {
+  flex-wrap: wrap;
+}
+
+.stat-card-expandable .stat-tooltip {
+  width: 100%;
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition: max-height 0.25s ease, opacity 0.2s ease, margin-top 0.25s ease;
+  margin-top: 0;
+}
+
+.stat-card-expandable:hover .stat-tooltip {
+  max-height: 200px;
+  opacity: 1;
+  margin-top: 12px;
+}
+
+.stat-tooltip {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding-top: 12px;
+}
+
+.stat-tooltip__heading {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--fg2);
+  margin-bottom: 2px;
+}
+
+.stat-tooltip__section {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.stat-tooltip__extremes {
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  padding-top: 8px;
+}
+
+.stat-tooltip__row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.stat-tooltip__year {
+  color: var(--fg2);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  min-width: 36px;
+}
+
+.stat-tooltip__val {
+  color: var(--fg0);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  min-width: 60px;
+}
+
+.stat-tooltip__range {
+  color: var(--fg2);
+  font-size: 11px;
+  margin-left: auto;
+}
+
+.stat-tooltip__extreme-label {
+  color: var(--fg2);
+  font-size: 12px;
+  min-width: 72px;
 }
 
 /* Card Links */

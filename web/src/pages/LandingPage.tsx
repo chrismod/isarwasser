@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { getLatestDaily } from '../lib/isarQueries'
+import { getLatestDaily, getDayOfYearHistory, type DayOfYearHistory } from '../lib/isarQueries'
 import { getCurrentLiveData } from '../lib/liveData'
 import type { LiveMeasurement } from '../lib/liveData'
 import { useI18n } from '../lib/i18n'
 import { VideoBackground } from '../components/VideoBackground'
+import { StatCardTooltip } from '../components/StatCardTooltip'
 
 function formatDate(date: any): string {
   if (!date) return ''
@@ -75,6 +76,8 @@ export function LandingPage() {
   const [temp, setTemp] = useState<any>({ mean: 3, date: new Date().toISOString() })
   const [liveLevel, setLiveLevel] = useState<LiveMeasurement | null>(null)
   const [liveTemp, setLiveTemp] = useState<LiveMeasurement | null>(null)
+  const [levelHistory, setLevelHistory] = useState<DayOfYearHistory | null>(null)
+  const [tempHistory, setTempHistory] = useState<DayOfYearHistory | null>(null)
   const [err, setErr] = useState<string | null>(null)
 
   useEffect(() => {
@@ -91,6 +94,14 @@ export function LandingPage() {
         setTemp(t)
         setLiveLevel(live.waterLevel)
         setLiveTemp(live.waterTemp)
+
+        const [lh, th] = await Promise.all([
+          getDayOfYearHistory('water_level_cm'),
+          getDayOfYearHistory('water_temperature_c'),
+        ])
+        if (cancelled) return
+        setLevelHistory(lh)
+        setTempHistory(th)
       } catch (e: any) {
         if (cancelled) return
         setErr(String(e?.message ?? e))
@@ -114,7 +125,7 @@ export function LandingPage() {
               <div className="card error-card">{err}</div>
             ) : (
               <div className="hero-stats">
-                <div className="stat-card stat-card-major">
+                <div className="stat-card stat-card-major stat-card-expandable">
                   <div className="stat-icon">
                     <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                       <path d="M12 2v20M12 2c-2.5 0-4 2-4 4v12c0 2.5 1.5 4 4 4s4-1.5 4-4V6c0-2-1.5-4-4-4z"/>
@@ -135,9 +146,10 @@ export function LandingPage() {
                       </div>
                     )}
                   </div>
+                  <StatCardTooltip history={levelHistory} unit="cm" />
                 </div>
 
-                <div className="stat-card stat-card-major">
+                <div className="stat-card stat-card-major stat-card-expandable">
                   <div className="stat-icon">
                     <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                       <path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"/>
@@ -155,6 +167,7 @@ export function LandingPage() {
                       </div>
                     )}
                   </div>
+                  <StatCardTooltip history={tempHistory} unit="°C" />
                 </div>
               </div>
             )}

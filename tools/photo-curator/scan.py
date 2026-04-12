@@ -381,11 +381,11 @@ def grammatical_gender(name: str) -> str:
         if n.endswith(suf):
             return "n"
     # masculine
-    for suf in ("steg", "garten", "weg", "platz", "park", "berg", "hof", "bach", "graben", "anger", "see", "turm", "stein"):
+    for suf in ("steg", "garten", "weg", "platz", "park", "berg", "hof", "bach", "graben", "anger", "see", "turm", "stein", "er", "markt", "ring", "damm", "rain", "grund"):
         if n.endswith(suf):
             return "m"
-    # default: feminine (most landmark names are -brücke etc.)
-    return "f"
+    # default: masculine (safer fallback for proper nouns)
+    return "m"
 
 
 # Phrase templates per (gender, register).
@@ -460,10 +460,16 @@ def label_for_point(
     if parks:
         parks.sort()
         name = parks[0][1]
-        g = grammatical_gender(name)
-        if g == "f":
-            return f"in der {name}"
-        return f"im {name}"
+        nl = name.lower()
+        # Enclosed spaces (gardens, parks, forests) → "im/in der" (inside).
+        # Place-like names (Flaucher, Mangfallplatz) → "am" (at).
+        enclosed = any(nl.endswith(s) for s in ("garten", "park", "wald", "hain", "anlage", "anlagen", "wiese", "aue", "auen"))
+        if enclosed:
+            if nl.endswith(("anlagen", "auen", "wiesen", "gärten")):
+                return f"in den {name}"
+            g = grammatical_gender(name)
+            return f"in der {name}" if g == "f" else f"im {name}"
+        return f"am {name}"
 
     if bridges:
         bridges.sort()

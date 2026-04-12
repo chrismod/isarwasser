@@ -31,6 +31,7 @@ web/public/mp4_raw/*.mp4
 ## Optimized videos (deployed manually to server, not via git)
 web/public/videos/*.mp4
 web/public/videos/flood-set.json
+web/public/videos/metadata.json
 !web/public/videos/.gitkeep
 
 ## Raw photos (private, manually promoted from imgsort)

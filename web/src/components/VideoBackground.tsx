@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { getCurrentLiveData } from '../lib/liveData'
 import { VIDEOS } from '../generated/videoList'
+import { VideoInfoBubble, type VideoMeta } from './VideoInfoBubble'
 
 // Water level (cm) at or above which flood-tagged clips may appear in
 // the background-video pool. Below this, they are unconditionally hidden.
@@ -9,6 +10,18 @@ import { VIDEOS } from '../generated/videoList'
 const FLOOD_LEVEL_CM = 200
 
 type FloodSet = { flood_videos: { filename: string }[] }
+
+type MetadataMap = Record<string, VideoMeta>
+
+async function loadMetadata(): Promise<MetadataMap> {
+  try {
+    const r = await fetch('/videos/metadata.json', { cache: 'no-cache' })
+    if (!r.ok) return {}
+    return await r.json()
+  } catch {
+    return {}
+  }
+}
 
 async function loadFloodSet(): Promise<Set<string>> {
   try {
@@ -35,17 +48,20 @@ function pickVideo(allowed: string[]): string | null {
 export function VideoBackground() {
   const [videoSrc, setVideoSrc] = useState<string>('')
   const [isLoaded, setIsLoaded] = useState(false)
+  const [meta, setMeta] = useState<VideoMeta | null>(null)
+  const [infoVisible, setInfoVisible] = useState(() => {
+    return localStorage.getItem('video-info-visible') !== 'false'
+  })
 
   useEffect(() => {
     let cancelled = false
     ;(async () => {
-      const [floodSet, live] = await Promise.all([
+      const [floodSet, live, allMeta] = await Promise.all([
         loadFloodSet(),
         getCurrentLiveData(),
+        loadMetadata(),
       ])
 
-      // Fail-safe flood gate: anything we are not 100% sure about counts
-      // as "no flood right now" → flood clips stay hidden.
       const liveLevel = live.waterLevel?.value_cm ?? null
       const floodAllowed = liveLevel !== null && liveLevel >= FLOOD_LEVEL_CM
 
@@ -57,30 +73,44 @@ export function VideoBackground() {
 
       if (cancelled) return
       const chosen = pickVideo(allowed)
-      if (chosen) setVideoSrc(chosen)
+      if (chosen) {
+        setVideoSrc(chosen)
+        const filename = chosen.split('/').pop() || ''
+        setMeta(allMeta[filename] ?? null)
+      }
     })()
     return () => {
       cancelled = true
     }
   }, [])
 
+  const toggleInfo = () => {
+    setInfoVisible(v => {
+      localStorage.setItem('video-info-visible', String(!v))
+      return !v
+    })
+  }
+
   if (!videoSrc) {
     return null
   }
 
   return (
-    <div className="video-background">
-      <video
-        autoPlay
-        muted
-        loop
-        playsInline
-        className={`video-background__video ${isLoaded ? 'loaded' : ''}`}
-        onCanPlay={() => setIsLoaded(true)}
-      >
-        <source src={videoSrc} type="video/mp4" />
-      </video>
-      <div className="video-background__overlay" />
-    </div>
+    <>
+      <div className="video-background">
+        <video
+          autoPlay
+          muted
+          loop
+          playsInline
+          className={`video-background__video ${isLoaded ? 'loaded' : ''}`}
+          onCanPlay={() => setIsLoaded(true)}
+        >
+          <source src={videoSrc} type="video/mp4" />
+        </video>
+        <div className="video-background__overlay" />
+      </div>
+      <VideoInfoBubble meta={meta} visible={infoVisible} onToggle={toggleInfo} />
+    </>
   )
 }

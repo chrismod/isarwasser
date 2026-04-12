@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { TrendingUp, Circle, BarChart2, Activity } from 'react-feather'
 import * as d3 from 'd3'
-import { getDailyRange, getHourlyRange, getRawRange, type ParameterKey, type SeriesPoint } from '../lib/isarQueries'
+import { getDailyRange, getHourlyRange, getRawRange, getExploreRange, type ParameterKey, type SeriesPoint } from '../lib/isarQueries'
 import { useAsync } from '../lib/useAsync'
 import { DataMissing } from '../components/DataMissing'
 import { useI18n } from '../lib/i18n'
@@ -97,7 +97,7 @@ export function ExplorePage() {
       } else if (resolution === 'hourly') {
         return getHourlyRange(parameter, startDate, endDate)
       }
-      return getDailyRange(parameter, startDate, endDate)
+      return getExploreRange(parameter, startDate, endDate)
     },
     [parameter, startDate, endDate, resolution]
   )
@@ -358,7 +358,16 @@ export function ExplorePage() {
         tooltip
           .style('opacity', '1')
           .html(`<strong>${d.x}</strong><br/>${d.y.toFixed(2)} ${unit}`)
-          .style('left', `${event.pageX + 10}px`)
+
+        const ttNode = tooltip.node() as HTMLElement
+        const ttWidth = ttNode.offsetWidth || 160
+        const vw = window.innerWidth
+        const leftPos = event.pageX + 10 + ttWidth > vw - 8
+          ? event.pageX - ttWidth - 10
+          : event.pageX + 10
+
+        tooltip
+          .style('left', `${leftPos}px`)
           .style('top', `${event.pageY - 28}px`)
       })
       .on('mouseout', () => {

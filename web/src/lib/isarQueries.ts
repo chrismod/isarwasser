@@ -4,6 +4,128 @@ import { getDuckDb, registerParquetFile } from './duckdbClient'
 export type ParameterKey = 'water_level_cm' | 'water_temperature_c'
 export type SeriesPoint = { x: string; y: number }
 
+// --------------- JSONL live-data supplement --------------------------------
+// The parquets are a snapshot. Live data beyond the parquet range lives in
+// per-day JSONL files under /data/current/. These functions fetch them and
+// return SeriesPoints so the explore chart can show recent data seamlessly.
+
+function jsonlDataType(param: ParameterKey): string {
+  return param === 'water_level_cm' ? 'water_level' : 'water_temperature'
+}
+
+function jsonlValueKey(param: ParameterKey): string {
+  return param === 'water_level_cm' ? 'value_cm' : 'value_celsius'
+}
+
+async function fetchJsonlDay(
+  param: ParameterKey,
+  dateStr: string,
+): Promise<SeriesPoint[]> {
+  const dt = jsonlDataType(param)
+  const vk = jsonlValueKey(param)
+  try {
+    const r = await fetch(`/data/current/${dt}_${dateStr}.jsonl`)
+    if (!r.ok) return []
+    const text = await r.text()
+    const points: SeriesPoint[] = []
+    for (const line of text.trim().split('\n')) {
+      if (!line.trim()) continue
+      try {
+        const entry = JSON.parse(line)
+        const v = entry[vk]
+        if (v == null) continue
+        points.push({ x: entry.timestamp, y: Number(v) })
+      } catch { /* skip malformed lines */ }
+    }
+    return points
+  } catch {
+    return []
+  }
+}
+
+function daysBetween(startStr: string, endStr: string): string[] {
+  const days: string[] = []
+  const d = new Date(startStr + 'T00:00:00')
+  const end = new Date(endStr + 'T00:00:00')
+  while (d <= end) {
+    days.push(d.toISOString().slice(0, 10))
+    d.setDate(d.getDate() + 1)
+  }
+  return days
+}
+
+export async function getJsonlRange(
+  param: ParameterKey,
+  startDate: string,
+  endDate: string,
+): Promise<SeriesPoint[]> {
+  const days = daysBetween(startDate, endDate)
+  const batches = await Promise.all(days.map((d) => fetchJsonlDay(param, d)))
+  return batches.flat().sort((a, b) => (a.x < b.x ? -1 : a.x > b.x ? 1 : 0))
+}
+
+async function getParquetMaxDate(param: ParameterKey): Promise<string> {
+  await ensureRegistered()
+  const { conn } = await getDuckDb()
+  const file = dailyName(param)
+  const r = await conn.query(
+    `SELECT max(date)::VARCHAR AS mx FROM parquet_scan('${file}')`,
+  )
+  const row = r.toArray()[0] as any
+  return row?.mx ? String(row.mx).slice(0, 10) : '1970-01-01'
+}
+
+export async function getExploreRange(
+  param: ParameterKey,
+  startDate: string,
+  endDate: string,
+): Promise<SeriesPoint[]> {
+  const parquetMax = await getParquetMaxDate(param)
+
+  // Parquet covers the historical bulk.
+  let parquetPoints: SeriesPoint[] = []
+  if (startDate <= parquetMax) {
+    parquetPoints = await getDailyRange(
+      param,
+      startDate,
+      endDate < parquetMax ? endDate : parquetMax,
+    )
+  }
+
+  // JSONL fills the gap from parquetMax+1 to endDate.
+  let livePoints: SeriesPoint[] = []
+  if (endDate > parquetMax) {
+    const liveStart =
+      startDate > parquetMax ? startDate : nextDay(parquetMax)
+    livePoints = await getJsonlRange(param, liveStart, endDate)
+    // Aggregate JSONL points to daily means to match the parquet granularity.
+    livePoints = aggregateDaily(livePoints)
+  }
+
+  return [...parquetPoints, ...livePoints]
+}
+
+function nextDay(dateStr: string): string {
+  const d = new Date(dateStr + 'T00:00:00')
+  d.setDate(d.getDate() + 1)
+  return d.toISOString().slice(0, 10)
+}
+
+function aggregateDaily(points: SeriesPoint[]): SeriesPoint[] {
+  const buckets = new Map<string, number[]>()
+  for (const p of points) {
+    const day = p.x.slice(0, 10)
+    if (!buckets.has(day)) buckets.set(day, [])
+    buckets.get(day)!.push(p.y)
+  }
+  return Array.from(buckets.entries())
+    .map(([day, vals]) => ({
+      x: day,
+      y: Math.round((vals.reduce((a, b) => a + b, 0) / vals.length) * 10) / 10,
+    }))
+    .sort((a, b) => (a.x < b.x ? -1 : 1))
+}
+
 const REGISTERED = new Set<string>()
 
 async function ensureRegistered() {
@@ -145,6 +267,70 @@ export async function getRecords(parameter: ParameterKey) {
     max: max
       ? { ts: String(max.ts), value: Number(max.value), status: String(max.status ?? '') }
       : null,
+  }
+}
+
+export type DayOfYearHistory = {
+  recentYears: { year: number; mean: number; min: number; max: number }[]
+  allTimeMin: { value: number; year: number }
+  allTimeMax: { value: number; year: number }
+}
+
+export async function getDayOfYearHistory(
+  parameter: ParameterKey,
+): Promise<DayOfYearHistory | null> {
+  await ensureRegistered()
+  const { conn } = await getDuckDb()
+  const file = dailyName(parameter)
+
+  const currentYear = new Date().getFullYear()
+  const doy = Math.floor(
+    (Date.now() - new Date(currentYear, 0, 0).getTime()) / 86400000,
+  )
+
+  const result = await conn.query(`
+    WITH daily AS (
+      SELECT
+        CAST(date AS DATE) AS d,
+        extract(year FROM CAST(date AS DATE)) AS yr,
+        mean, min, max
+      FROM parquet_scan('${file}')
+      WHERE mean IS NOT NULL
+        AND abs(extract(doy FROM CAST(date AS DATE)) - ${doy}) <= 1
+    )
+    SELECT yr AS year,
+           round(avg(mean), 1) AS mean,
+           round(min(min), 1) AS min,
+           round(max(max), 1) AS max
+    FROM daily
+    GROUP BY yr
+    ORDER BY yr DESC
+  `)
+
+  const rows = result.toArray().map((r: any) => ({
+    year: Number(r.year),
+    mean: Number(r.mean),
+    min: Number(r.min),
+    max: Number(r.max),
+  }))
+
+  if (rows.length === 0) return null
+
+  const recentYears = rows.filter(
+    (r) => r.year >= currentYear - 2 && r.year < currentYear,
+  )
+
+  let allTimeMin = rows[0]
+  let allTimeMax = rows[0]
+  for (const r of rows) {
+    if (r.min < allTimeMin.min) allTimeMin = r
+    if (r.max > allTimeMax.max) allTimeMax = r
+  }
+
+  return {
+    recentYears,
+    allTimeMin: { value: allTimeMin.min, year: allTimeMin.year },
+    allTimeMax: { value: allTimeMax.max, year: allTimeMax.year },
   }
 }
 
