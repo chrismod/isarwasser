@@ -31,6 +31,8 @@ from pathlib import Path
 
 from flask import Flask, abort, g, jsonify, render_template_string, request, send_file
 
+from backup import snapshot_db
+
 REPO_ROOT = Path(__file__).resolve().parents[2]
 STATE_DIR = REPO_ROOT / "imgsort"
 THUMBS_DIR = STATE_DIR / "thumbs"
@@ -247,6 +249,12 @@ INDEX_HTML = r"""<!doctype html>
               data-filter="{{ f }}">{{ f }}</button>
     {% endfor %}
   </div>
+  <div class="filters">
+    {% for k, label in [('all','alle'),('photo','📷 Foto'),('video','🎬 Video')] %}
+      <button class="kind-btn{% if k == active_kind %} active{% endif %}"
+              data-kind="{{ k }}">{{ label }}</button>
+    {% endfor %}
+  </div>
   <div class="stats" id="stats">{{ assets|length }} Treffer</div>
 </header>
 <main>
@@ -391,11 +399,18 @@ document.querySelectorAll('.thumb').forEach(img => {
   });
 });
 
+function navWithParams(updates) {
+  const u = new URL(location.href);
+  for (const [k, v] of Object.entries(updates)) u.searchParams.set(k, v);
+  location.href = u.pathname + '?' + u.searchParams.toString();
+}
+
 document.querySelectorAll('.filter-btn').forEach(b => {
-  b.addEventListener('click', () => {
-    const f = b.dataset.filter;
-    location.href = '/?filter=' + encodeURIComponent(f);
-  });
+  b.addEventListener('click', () => navWithParams({filter: b.dataset.filter}));
+});
+
+document.querySelectorAll('.kind-btn').forEach(b => {
+  b.addEventListener('click', () => navWithParams({kind: b.dataset.kind}));
 });
 
 let currentModalId = null;
@@ -514,18 +529,22 @@ if (cards.length) selectCard(0);
 @app.route("/")
 def index():
     f = request.args.get("filter", "new")
-    if f == "all":
-        rows = db().execute(
-            "SELECT * FROM assets WHERE thumb_path IS NOT NULL "
-            "ORDER BY taken_at"
-        ).fetchall()
-    else:
-        rows = db().execute(
-            "SELECT * FROM assets WHERE status = ? AND thumb_path IS NOT NULL "
-            "ORDER BY taken_at",
-            (f,),
-        ).fetchall()
-    return render_template_string(INDEX_HTML, assets=rows, active_filter=f)
+    k = request.args.get("kind", "all")
+
+    where = ["thumb_path IS NOT NULL"]
+    params: list = []
+    if f != "all":
+        where.append("status = ?")
+        params.append(f)
+    if k in ("photo", "video"):
+        where.append("kind = ?")
+        params.append(k)
+
+    sql = f"SELECT * FROM assets WHERE {' AND '.join(where)} ORDER BY taken_at"
+    rows = db().execute(sql, params).fetchall()
+    return render_template_string(
+        INDEX_HTML, assets=rows, active_filter=f, active_kind=k
+    )
 
 
 @app.route("/thumb/<int:asset_id>.jpg")
@@ -636,6 +655,10 @@ def main() -> int:
     if not DB_PATH.exists():
         print(f"ERROR: {DB_PATH} not found. Run scan.py and thumbs.py first.")
         return 2
+
+    snap = snapshot_db("review")
+    if snap is not None:
+        print(f"DB snapshot → {snap.relative_to(REPO_ROOT)}")
 
     print(f"Photo Curator → http://127.0.0.1:{args.port}")
     app.run(host="127.0.0.1", port=args.port, debug=False)

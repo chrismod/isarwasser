@@ -22,6 +22,8 @@ from pathlib import Path
 from PIL import Image, ImageOps
 from tqdm import tqdm
 
+from backup import snapshot_db
+
 REPO_ROOT = Path(__file__).resolve().parents[2]
 STATE_DIR = REPO_ROOT / "imgsort"
 THUMBS_DIR = STATE_DIR / "thumbs"
@@ -96,6 +98,10 @@ def main() -> int:
     if not DB_PATH.exists():
         print(f"ERROR: {DB_PATH} not found. Run scan.py first.", file=sys.stderr)
         return 2
+
+    snap = snapshot_db("thumbs")
+    if snap is not None:
+        print(f"DB snapshot → {snap.relative_to(REPO_ROOT)}")
 
     conn = sqlite3.connect(DB_PATH)
     cur = conn.cursor()

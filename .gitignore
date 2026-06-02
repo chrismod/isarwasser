@@ -46,6 +46,7 @@ imgsort/curator.db-wal
 imgsort/curator.db-shm
 imgsort/thumbs/
 imgsort/preview/
+imgsort/backups/
 
 ## OS
 .DS_Store

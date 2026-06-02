@@ -34,6 +34,8 @@ from shapely.ops import transform as shp_transform
 from shapely.strtree import STRtree
 from tqdm import tqdm
 
+from backup import snapshot_db
+
 # ---------- paths ----------------------------------------------------------
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -529,6 +531,10 @@ def main() -> int:
     if not args.root.exists():
         print(f"ERROR: --root does not exist: {args.root}", file=sys.stderr)
         return 2
+
+    snap = snapshot_db("scan")
+    if snap is not None:
+        print(f"DB snapshot → {snap.relative_to(REPO_ROOT)}")
 
     print("Loading Isar geometry…")
     isar_metric = load_isar()

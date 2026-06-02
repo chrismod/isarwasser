@@ -512,6 +512,27 @@ a {
   margin-left: 4px;
 }
 
+.stat-value-skeleton {
+  display: inline-block;
+  width: 96px;
+  height: 40px;
+  border-radius: 6px;
+  vertical-align: middle;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.06) 0%,
+    rgba(255, 255, 255, 0.16) 50%,
+    rgba(255, 255, 255, 0.06) 100%
+  );
+  background-size: 200% 100%;
+  animation: stat-skeleton-shimmer 1.4s ease-in-out infinite;
+}
+
+@keyframes stat-skeleton-shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
 .stat-date {
   font-size: 12px;
   color: var(--fg2);

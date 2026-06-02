@@ -71,9 +71,8 @@ function formatDate(date: any): string {
 
 export function LandingPage() {
   const { t } = useI18n()
-  // Initialize with placeholder values for instant display
-  const [level, setLevel] = useState<any>({ mean: 87, date: new Date().toISOString() })
-  const [temp, setTemp] = useState<any>({ mean: 3, date: new Date().toISOString() })
+  const [level, setLevel] = useState<any>(null)
+  const [temp, setTemp] = useState<any>(null)
   const [liveLevel, setLiveLevel] = useState<LiveMeasurement | null>(null)
   const [liveTemp, setLiveTemp] = useState<LiveMeasurement | null>(null)
   const [levelHistory, setLevelHistory] = useState<DayOfYearHistory | null>(null)
@@ -82,18 +81,25 @@ export function LandingPage() {
 
   useEffect(() => {
     let cancelled = false
+
+    // Live JSONL is small and fast (~100 ms) — kick off independently of
+    // the slower DuckDB/parquet daily reads so the hero shows real values
+    // as soon as possible, not a placeholder.
+    getCurrentLiveData().then(live => {
+      if (cancelled) return
+      setLiveLevel(live.waterLevel)
+      setLiveTemp(live.waterTemp)
+    }).catch(() => {})
+
     ;(async () => {
       try {
-        const [l, t, live] = await Promise.all([
+        const [l, t] = await Promise.all([
           getLatestDaily('water_level_cm'),
           getLatestDaily('water_temperature_c'),
-          getCurrentLiveData(),
         ])
         if (cancelled) return
         setLevel(l)
         setTemp(t)
-        setLiveLevel(live.waterLevel)
-        setLiveTemp(live.waterTemp)
 
         const [lh, th] = await Promise.all([
           getDayOfYearHistory('water_level_cm'),
@@ -111,6 +117,11 @@ export function LandingPage() {
       cancelled = true
     }
   }, [])
+
+  const levelValue = liveLevel?.value_cm ?? level?.mean
+  const tempValue = liveTemp?.value_celsius ?? temp?.mean
+  const levelDate = liveLevel?.timestamp ?? level?.date
+  const tempDate = liveTemp?.timestamp ?? temp?.date
 
   return (
     <div className="landing-page">
@@ -137,13 +148,17 @@ export function LandingPage() {
                   <div className="stat-content">
                     <div className="stat-label">{t.landingWaterLevel}</div>
                     <div className="stat-value">
-                      {liveLevel?.value_cm ? `${liveLevel.value_cm.toFixed(1)}` : `${level.mean.toFixed(1)}`}
-                      <span className="stat-unit">{t.unitCm}</span>
+                      {levelValue != null ? (
+                        <>
+                          {levelValue.toFixed(1)}
+                          <span className="stat-unit">{t.unitCm}</span>
+                        </>
+                      ) : (
+                        <span className="stat-value-skeleton" aria-busy="true" />
+                      )}
                     </div>
-                    {(liveLevel?.timestamp || level?.date) && (
-                      <div className="stat-date">
-                        {liveLevel ? formatDate(liveLevel.timestamp) : formatDate(level.date)}
-                      </div>
+                    {levelDate && (
+                      <div className="stat-date">{formatDate(levelDate)}</div>
                     )}
                   </div>
                   <StatCardTooltip history={levelHistory} unit="cm" />
@@ -158,13 +173,17 @@ export function LandingPage() {
                   <div className="stat-content">
                     <div className="stat-label">{t.landingWaterTemp}</div>
                     <div className="stat-value">
-                      {liveTemp?.value_celsius ? `${liveTemp.value_celsius.toFixed(1)}` : `${temp.mean.toFixed(1)}`}
-                      <span className="stat-unit">{t.unitCelsius}</span>
+                      {tempValue != null ? (
+                        <>
+                          {tempValue.toFixed(1)}
+                          <span className="stat-unit">{t.unitCelsius}</span>
+                        </>
+                      ) : (
+                        <span className="stat-value-skeleton" aria-busy="true" />
+                      )}
                     </div>
-                    {(liveTemp?.timestamp || temp?.date) && (
-                      <div className="stat-date">
-                        {liveTemp ? formatDate(liveTemp.timestamp) : formatDate(temp.date)}
-                      </div>
+                    {tempDate && (
+                      <div className="stat-date">{formatDate(tempDate)}</div>
                     )}
                   </div>
                   <StatCardTooltip history={tempHistory} unit="°C" />

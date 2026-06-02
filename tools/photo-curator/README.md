@@ -72,3 +72,7 @@ Then 2025, 2024, 2023.
 - `promote.py` never deletes the source.
 - `imgsort/curator.db`, `imgsort/thumbs/`, and `web/public/jpg_raw/*.jpg`
   are gitignored — nothing private gets committed by accident.
+- Every `scan` / `thumbs` / `promote` / `review` startup writes a snapshot
+  to `imgsort/backups/curator.YYYY-MM-DD_HHMMSS.<reason>.db` (last 30
+  kept, identical snapshots deduplicated). Restore with
+  `cp imgsort/backups/<file> imgsort/curator.db`.

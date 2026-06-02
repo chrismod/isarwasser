@@ -26,6 +26,8 @@ from datetime import datetime
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
+from backup import snapshot_db
+
 REPO_ROOT = Path(__file__).resolve().parents[2]
 STATE_DIR = REPO_ROOT / "imgsort"
 DB_PATH = STATE_DIR / "curator.db"
@@ -66,6 +68,11 @@ def main() -> int:
     if not DB_PATH.exists():
         print(f"ERROR: {DB_PATH} not found.", file=sys.stderr)
         return 2
+
+    if not args.dry_run:
+        snap = snapshot_db("promote")
+        if snap is not None:
+            print(f"DB snapshot → {snap.relative_to(REPO_ROOT)}")
 
     JPG_RAW.mkdir(parents=True, exist_ok=True)
     MP4_RAW.mkdir(parents=True, exist_ok=True)
