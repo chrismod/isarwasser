@@ -61,7 +61,6 @@ function seasonDistance(a: Season, b: Season): number {
 }
 
 function scoreVideo(
-  path: string,
   meta: VideoMeta | undefined,
   nowSeason: Season,
   liveLevelCm: number | null,
@@ -101,7 +100,7 @@ function pickVideo(
   const nowSeason = currentSeason()
   const scored = allowed.map(path => {
     const filename = path.split('/').pop() || ''
-    return { path, weight: scoreVideo(path, metaMap[filename], nowSeason, liveLevelCm) }
+    return { path, weight: scoreVideo(metaMap[filename], nowSeason, liveLevelCm) }
   })
   const choice = weightedPick(scored)
   if (choice) sessionStorage.setItem('bg-video', choice)
