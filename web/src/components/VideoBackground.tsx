@@ -9,6 +9,16 @@ import { VideoInfoBubble, type VideoMeta } from './VideoInfoBubble'
 // stay below it. Tweak once we wire the official Bavarian Meldestufen.
 const FLOOD_LEVEL_CM = 200
 
+// Weighted-random scoring constants. Score per video is
+//   1 / (1 + SEASON_WEIGHT * seasonDistance + |levelDelta| / LEVEL_SCALE_CM)
+// — i.e. lower season distance and smaller pegel delta produce higher
+// pick probability, but no candidate is ever excluded. Tweak these to
+// shift the bias balance.
+const SEASON_WEIGHT = 1.5
+const LEVEL_SCALE_CM = 60
+
+type Season = 'winter' | 'spring' | 'summer' | 'autumn'
+
 type FloodSet = { flood_videos: { filename: string }[] }
 
 type MetadataMap = Record<string, VideoMeta>
@@ -34,14 +44,67 @@ async function loadFloodSet(): Promise<Set<string>> {
   }
 }
 
-function pickVideo(allowed: string[]): string | null {
+function currentSeason(now = new Date()): Season {
+  // Meteorological seasons, Northern Hemisphere.
+  const m = now.getMonth() // 0=Jan
+  if (m <= 1 || m === 11) return 'winter'
+  if (m <= 4) return 'spring'
+  if (m <= 7) return 'summer'
+  return 'autumn'
+}
+
+// Cyclic distance on the season ring (0..2).
+function seasonDistance(a: Season, b: Season): number {
+  const order: Season[] = ['winter', 'spring', 'summer', 'autumn']
+  const d = Math.abs(order.indexOf(a) - order.indexOf(b))
+  return Math.min(d, 4 - d)
+}
+
+function scoreVideo(
+  path: string,
+  meta: VideoMeta | undefined,
+  nowSeason: Season,
+  liveLevelCm: number | null,
+): number {
+  if (!meta) return 1 / (1 + SEASON_WEIGHT * 1) // neutral score when meta is missing
+  const sDist =
+    meta.season ? seasonDistance(nowSeason, meta.season as Season) : 1
+  const levelPenalty =
+    liveLevelCm !== null && typeof meta.waterLevelCm === 'number'
+      ? Math.abs(meta.waterLevelCm - liveLevelCm) / LEVEL_SCALE_CM
+      : 0
+  return 1 / (1 + SEASON_WEIGHT * sDist + levelPenalty)
+}
+
+function weightedPick(items: { path: string; weight: number }[]): string | null {
+  if (items.length === 0) return null
+  const total = items.reduce((s, x) => s + x.weight, 0)
+  if (total <= 0) return items[Math.floor(Math.random() * items.length)].path
+  let r = Math.random() * total
+  for (const x of items) {
+    r -= x.weight
+    if (r <= 0) return x.path
+  }
+  return items[items.length - 1].path
+}
+
+function pickVideo(
+  allowed: string[],
+  metaMap: MetadataMap,
+  liveLevelCm: number | null,
+): string | null {
   if (allowed.length === 0) return null
   const stored = sessionStorage.getItem('bg-video')
   if (stored && allowed.includes(stored)) {
     return stored
   }
-  const choice = allowed[Math.floor(Math.random() * allowed.length)]
-  sessionStorage.setItem('bg-video', choice)
+  const nowSeason = currentSeason()
+  const scored = allowed.map(path => {
+    const filename = path.split('/').pop() || ''
+    return { path, weight: scoreVideo(path, metaMap[filename], nowSeason, liveLevelCm) }
+  })
+  const choice = weightedPick(scored)
+  if (choice) sessionStorage.setItem('bg-video', choice)
   return choice
 }
 
@@ -72,7 +135,7 @@ export function VideoBackground() {
       })
 
       if (cancelled) return
-      const chosen = pickVideo(allowed)
+      const chosen = pickVideo(allowed, allMeta, liveLevel)
       if (chosen) {
         setVideoSrc(chosen)
         const filename = chosen.split('/').pop() || ''
