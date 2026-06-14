@@ -39,19 +39,34 @@ async function fetchLatestFromJSONL(filename: string): Promise<LiveMeasurement |
   }
 }
 
+// How far back to walk if today's JSONL is missing. The scraper writes
+// no file at all when the station returns no data, so a gap means
+// outage. 14 days is enough to bridge typical sensor downtime; beyond
+// that the value is too stale and we let the frontend fall back to the
+// daily-mean path from Parquet.
+const MAX_DAYS_BACK = 14
+
+async function fetchLatestAvailable(prefix: string): Promise<LiveMeasurement | null> {
+  const now = new Date()
+  for (let i = 0; i <= MAX_DAYS_BACK; i++) {
+    const d = new Date(now)
+    d.setDate(d.getDate() - i)
+    const day = d.toISOString().split('T')[0]
+    const m = await fetchLatestFromJSONL(`/data/current/${prefix}_${day}.jsonl`)
+    if (m) return m
+  }
+  return null
+}
+
 export async function getCurrentLiveData(): Promise<{
   waterLevel: LiveMeasurement | null
   waterTemp: LiveMeasurement | null
 }> {
-  // Get today's date for the filename
-  const today = new Date().toISOString().split('T')[0]
-  
-  // Fetch both water level and temperature in parallel
   const [waterLevel, waterTemp] = await Promise.all([
-    fetchLatestFromJSONL(`/data/current/water_level_${today}.jsonl`),
-    fetchLatestFromJSONL(`/data/current/water_temperature_${today}.jsonl`)
+    fetchLatestAvailable('water_level'),
+    fetchLatestAvailable('water_temperature'),
   ])
-  
+
   return {
     waterLevel,
     waterTemp
