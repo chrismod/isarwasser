@@ -4,6 +4,8 @@ Automated script to fetch current Isar water levels and temperature
 Designed to run every 3 hours via cron
 """
 
+import re
+
 import requests
 from bs4 import BeautifulSoup
 from datetime import datetime
@@ -17,6 +19,14 @@ HND_BASE_URL = "https://www.hnd.bayern.de"
 GKD_BASE_URL = "https://www.gkd.bayern.de"
 DATA_DIR = Path(__file__).parent.parent / "data" / "current"
 LOG_FILE = Path(__file__).parent.parent / "log.txt"
+
+def parse_german_datetime(s):
+    """Parse 'DD.MM.YYYY HH:MM' or 'DD.MM.YYYY HH:MM Uhr' (GKD added the
+    ' Uhr' suffix on the wassertemperatur table in June 2026 — strip it
+    so both sites' formats keep working)."""
+    s = re.sub(r"\s*Uhr\s*$", "", s).strip()
+    return datetime.strptime(s, "%d.%m.%Y %H:%M")
+
 
 def log(message):
     """Log message to console and file"""
@@ -69,8 +79,8 @@ def fetch_latest_water_level():
         date_time_str = cols[0].get_text(strip=True)
         value_str = cols[1].get_text(strip=True)
         
-        # Parse date/time (format: "25.01.2026 16:00")
-        timestamp = datetime.strptime(date_time_str, "%d.%m.%Y %H:%M")
+        # Parse date/time (format: "25.01.2026 16:00" or with " Uhr" suffix)
+        timestamp = parse_german_datetime(date_time_str)
         
         # Parse value (format: "87" in cm)
         value = int(value_str)
@@ -106,7 +116,7 @@ def fetch_latest_water_temperature():
     """
     Fetch only the latest water temperature value from GKD website
     """
-    url = f"{GKD_BASE_URL}/de/fluesse/wassertemperatur/kelheim/muenchen-{STATION_ID}/messwerte/tabelle"
+    url = f"{GKD_BASE_URL}/de/fluesse/wassertemperatur/isar/muenchen-{STATION_ID}/messwerte/tabelle"
     
     log(f"Fetching temperature data from: {url}")
     
@@ -146,9 +156,9 @@ def fetch_latest_water_temperature():
                     log(f"INFO: Most recent measurement has no data ('{value_str}'), checking older measurements...")
                 continue
             
-            # Parse date/time (format: "27.01.2026 19:30")
+            # Parse date/time (format: "27.01.2026 19:30" or "… 19:30 Uhr")
             try:
-                timestamp = datetime.strptime(date_time_str, "%d.%m.%Y %H:%M")
+                timestamp = parse_german_datetime(date_time_str)
             except ValueError as e:
                 log(f"WARNING: Could not parse timestamp '{date_time_str}': {e}")
                 continue
