@@ -11,7 +11,11 @@ const translations = {
     navExplore: 'Erkunden',
     navRecords: 'Rekorde',
     footerSource: 'Datenquelle: Bayerisches Landesamt für Umwelt (gkd.bayern.de), Pegel 16005701 München/Isar. v1 ist ein lokaler Entwicklungs-Prototyp.',
-    
+    legalImprint: 'Impressum',
+    legalPrivacy: 'Datenschutz',
+    legalClose: 'Schließen',
+    legalRegion: 'Rechtliches',
+
     // Landing Page
     landingTitle: 'Isarwasser in München',
     landingLead: 'Eine interaktive Ansicht von Wasserstand und Wassertemperatur der Isar — von 1973 bis heute.',
@@ -90,7 +94,11 @@ const translations = {
     navExplore: 'Explore',
     navRecords: 'Min./Max.',
     footerSource: 'Data source: Bayerisches Landesamt für Umwelt (gkd.bayern.de), Station 16005701 München/Isar. v1 is a local dev prototype.',
-    
+    legalImprint: 'Imprint',
+    legalPrivacy: 'Data protection',
+    legalClose: 'Close',
+    legalRegion: 'Legal',
+
     // Landing Page
     landingTitle: 'Isarwasser in München',
     landingLead: 'An interactive view of water level and water temperature of the Isar — from 1973 to today.',

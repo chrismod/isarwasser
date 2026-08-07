@@ -1,5 +1,7 @@
 import { NavLink, Outlet } from 'react-router-dom'
 import { useI18n } from '../lib/i18n'
+import { useMatomoPageViews } from '../lib/matomo'
+import { LegalFooter } from './LegalFooter'
 
 function navLinkClassName({ isActive }: { isActive: boolean }) {
   return ['navLink', isActive ? 'navLinkActive' : ''].filter(Boolean).join(' ')
@@ -7,6 +9,7 @@ function navLinkClassName({ isActive }: { isActive: boolean }) {
 
 export function AppLayout() {
   const { language, setLanguage, t } = useI18n()
+  useMatomoPageViews()
 
   return (
     <div className="app">
@@ -40,6 +43,8 @@ export function AppLayout() {
 
       <footer className="appFooter">
         <div className="container appFooterInner">
+          <LegalFooter />
+
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap' }}>
             <div className="muted">{t.footerSource}</div>
             <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
